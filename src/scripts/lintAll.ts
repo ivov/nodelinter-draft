@@ -1,38 +1,59 @@
 import fs from "fs";
 import ts from "typescript";
+import path from "path";
+import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { Traverser } from "../services/Traverser";
 import { Validator } from "../services/Validator";
 import { errors as errorSchema } from "../errors";
 import { Presenter } from "../services/Presenter";
 
-// const tmpDir = "tmp";
-
-//const fs = require('fs');
-// const path = require("path");
-
-// fs.readdir(tmpDir, (err: any, files: any) => {
-//   if (err) throw err;
-
-//   for (const file of files) {
-//     fs.unlink(path.join(tmpDir, file), (err) => {
-//       if (err) throw err;
-//     });
-//   }
-// });
-// process.exit();
-
+const repoUrl = "https://github.com/n8n-io/n8n.git";
 const start = new Date();
+let paths: string[] = [];
+let tmpobj: any = null;
 
-if (process.argv.length < 3) {
-  console.log("Enter the path to the directory to parse");
+const argv = yargs(hideBin(process.argv)).argv;
+if (!argv.branch && process.argv.length < 3) {
+  console.log("Usage:");
+  console.log("Scan either a local dir or a remote branch");
+  console.log("  npm run lint <local_path_to_scan>");
+  console.log("  npm run lint -- --branch <branch_name>");
   process.exit(0);
 }
 
-var glob = require("glob");
-let paths1: string[] = glob.sync(`${process.argv[2]}/**/*.node.ts`);
-let paths2: string[] = glob.sync(`${process.argv[2]}/**/*Description.ts`);
+if (argv.branch) {
+  // Find relevant new files in a branch
 
-const paths = [...paths1, ...paths2];
+  // Create a tmp dir to check out the repository to
+  const tmp = require("tmp");
+  tmpobj = tmp.dirSync({ unsafeCleanup: true });
+  const tmpDir = tmpobj.name;
+
+  // Check out repository and get list of relevant changed files
+  const execSync = require("child_process").execSync;
+  console.log(`Fetching PR into ${tmpDir}`);
+  var code = execSync(
+    `git clone ${repoUrl} "${tmpDir}"; cd ${tmpDir}; git checkout ${argv.branch}; git pull`
+  );
+  var diff = execSync(
+    `cd ${tmpDir}; git pull; git --no-pager diff --name-only FETCH_HEAD $(git merge-base FETCH_HEAD master)`
+  ).toString();
+  const changedFilePaths = diff.trim().split("\n");
+  const filteredPaths = changedFilePaths.filter(
+    (p: string) => p.includes(".node.ts") || p.includes("Description.ts")
+  );
+  paths = filteredPaths.map((p: string) => path.join(tmpDir, p));
+  //console.log(paths)
+} else {
+  // Find relevant files in the local dir
+  var glob = require("glob");
+  // paths = glob.sync(`${process.argv[2]}/**/*.node.ts`);
+  let paths1: string[] = glob.sync(`${process.argv[2]}/**/*.node.ts`);
+  let paths2: string[] = glob.sync(`${process.argv[2]}/**/*Description.ts`);
+
+  paths = [...paths1, ...paths2];
+}
 
 var errors: LoggedError[] = [];
 paths.forEach((path) => {
@@ -99,3 +120,7 @@ if (num_errors > 0) {
 } else {
   console.log("No errors! 🙌");
 }
+
+if (argv.branch)
+  // Remove all the files we created
+  tmpobj.removeCallback();
