@@ -52,7 +52,7 @@ export class Presenter {
     // const fileLink = ansiEscapes.link(linkText, linkPath + ":" + error.line);
     const fileLink = ansiEscapes.link(linkText, linkPath);
 
-    console.log(this.formatLogLevel(error.logLevel) + " " + fileLink);
+    console.log(chalk.bgHex("#FFA500").underline(fileLink));
   }
 
   private static showSecondLine(error: LoggedError) {
@@ -61,13 +61,14 @@ export class Presenter {
     const secondLine = [
       this.formatMessage(error.message, error.logLevel),
       this.formatLintGroup(lintGroup),
+      `Line ${error.line}`,
     ].join(" ");
 
-    console.log(secondLine);
+    console.log(this.formatLogLevel(error.logLevel) + " " + secondLine);
   }
 
   private static showThirdLine(error: LoggedError) {
-    console.log(`  ${chalk.grey(`» ${error.excerpt}`)}`);
+    console.log(`  ${chalk.grey(`  » ${error.excerpt}`)}`);
   }
 
   private static formatMessage(message: string, logLevel: LogLevel) {
@@ -80,12 +81,12 @@ export class Presenter {
   }
 
   private static formatLogLevel(logLevel: LogLevel) {
-    const paint = this.getLogLevelPaint(logLevel);
+    // const paint = this.getLogLevelPaint(logLevel);
+    const paint = this.getMessagePaint(logLevel);
+    // const format = (logLevel: LogLevel) =>
+    //   paint(this.pad(logLevel.toUpperCase()));
 
-    const format = (logLevel: LogLevel) =>
-      paint(this.pad(logLevel.toUpperCase()));
-
-    return format(logLevel);
+    return `  ${paint(logLevel.toUpperCase())}`;
   }
 
   private static formatSourceFilePath(sourceFilePath: string) {
