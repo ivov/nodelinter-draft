@@ -11,4 +11,10 @@ export const properties = [
     type: 'string',
     default: '',
   },
+  {
+    displayName: ' User ID',
+    name: 'userId',
+    type: 'string',
+    default: '',
+  },
 ];
