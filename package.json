@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "tsc && node dist/scripts/lint.js",
-    "lintall": "tsc && node dist/scripts/lintAll.js",
+    "lintall": "tsc && node dist/scripts/lintAll.js ../n8n",
     "clear": "rm -rf dist",
     "test": "jest"
   },
