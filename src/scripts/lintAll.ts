@@ -19,7 +19,7 @@ if (!argv.branch && !argv.local) {
   console.log("Scan either a local dir or a remote branch");
   console.log("  npm run lint -- --local <local_path_to_scan>");
   console.log("  npm run lint -- --branch <branch_name>");
-  console.log("You can also specify a min --level to report (either error, warning or info)");
+  console.log("You can also specify a --minlevel to report (either error, warning or info)");
   process.exit(0);
 }
 
@@ -71,10 +71,10 @@ paths.forEach((path) => {
   const order = ['error', 'warning', 'info']
   validator.errorLog.sort((a, b) => order.indexOf(a.logLevel) < order.indexOf(b.logLevel) ? -1 : 1)
 
-  if(argv.level) {
+  if(argv.minlevel) {
     //Remove any errors below the set level
     //@ts-ignore
-    validator.errorLog = validator.errorLog.filter((error:any) => order.indexOf(error.logLevel) <= order.indexOf(argv.level.toString()))
+    validator.errorLog = validator.errorLog.filter((error:any) => order.indexOf(error.logLevel) <= order.indexOf(argv.minlevel.toString()))
   }
 
   errors.push(...validator.errorLog);
