@@ -1,0 +1,13 @@
+{
+  "editor.formatOnSave": true,
+  "search.exclude": {
+    "dist": true,
+    "node_modules": true
+  },
+  "files.exclude": {
+    "node_modules": true,
+    "package-lock.json": true,
+    "**/*.js": true
+  },
+  "typescript.tsdk": "node_modules\\typescript\\lib"
+}
