@@ -14,11 +14,12 @@ let paths: string[] = [];
 let tmpobj: any = null;
 
 const argv = yargs(hideBin(process.argv)).argv;
-if (!argv.branch && process.argv.length < 3) {
+if (!argv.branch && !argv.local) {
   console.log("Usage:");
   console.log("Scan either a local dir or a remote branch");
-  console.log("  npm run lint <local_path_to_scan>");
+  console.log("  npm run lint -- --local <local_path_to_scan>");
   console.log("  npm run lint -- --branch <branch_name>");
+  console.log("You can also specify a min --level to report (either error, warning or info)");
   process.exit(0);
 }
 
@@ -48,9 +49,10 @@ if (argv.branch) {
 } else {
   // Find relevant files in the local dir
   var glob = require("glob");
-  // paths = glob.sync(`${process.argv[2]}/**/*.node.ts`);
-  let paths1: string[] = glob.sync(`${process.argv[2]}/**/*.node.ts`);
-  let paths2: string[] = glob.sync(`${process.argv[2]}/**/*Description.ts`);
+
+  console.log("Scanning files...")
+  let paths1: string[] = glob.sync(`${argv.local}/**/*.node.ts`);
+  let paths2: string[] = glob.sync(`${argv.local}/**/*Description.ts`);
 
   paths = [...paths1, ...paths2];
 }
@@ -64,6 +66,16 @@ paths.forEach((path) => {
   ts.transpileModule(source, {
     transformers: { before: [Traverser.traverse(validator)] },
   });
+
+  // Sort the errors by importance
+  const order = ['error', 'warning', 'info']
+  validator.errorLog.sort((a, b) => order.indexOf(a.logLevel) < order.indexOf(b.logLevel) ? -1 : 1)
+
+  if(argv.level) {
+    //Remove any errors below the set level
+    //@ts-ignore
+    validator.errorLog = validator.errorLog.filter((error:any) => order.indexOf(error.logLevel) <= order.indexOf(argv.level.toString()))
+  }
 
   errors.push(...validator.errorLog);
   Presenter.showLogs(validator.errorLog);
